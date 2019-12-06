@@ -56,8 +56,6 @@ resource "kubernetes_deployment" "jupyter" {
         container {
           name = var.container_name
           image = var.image
-          command = var.command
-          args = local.args
 
           # mount disk to container
           volume_mount {
