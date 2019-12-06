@@ -21,5 +21,5 @@ variable "image" {
 }
   
 variable "persistent_mount_path" {
-  default="/home/jovyan/work"
+  default="/usr/src/app/config"
 }
