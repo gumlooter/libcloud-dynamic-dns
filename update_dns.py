@@ -3,6 +3,7 @@ from libcloud.common.types import LibcloudError
 from libcloud.dns.drivers.google import GoogleDNSDriver
 from libcloud.dns.types import RecordType
 import requests
+import time
 from config import Config
 
 
@@ -67,8 +68,11 @@ class GoogleDNSUpdater:
 
 if __name__ == '__main__':
     WHATS_MY_IP_URL = "https://api.ipify.org"
-    current_ip = requests.get(WHATS_MY_IP_URL).text
     gdns = GoogleDNSUpdater()
-    result = gdns.update_record_ip(Config.A_RECORD_ZONE_NAME, Config.A_RECORD_NAME,
-                                   current_ip, Config.A_RECORD_TTL_SECONDS)
-    print("SUCCESS" if result else "FAILURE")
+    starttime=time.time()
+    while True:
+        current_ip = requests.get(WHATS_MY_IP_URL).text
+        result = gdns.update_record_ip(Config.A_RECORD_ZONE_NAME, Config.A_RECORD_NAME,
+                                       current_ip, Config.A_RECORD_TTL_SECONDS)
+        print("SUCCESS" if result else "FAILURE")
+        time.sleep(3600.0 - ((time.time() - starttime) % 3600.0)) #repeat every hour
