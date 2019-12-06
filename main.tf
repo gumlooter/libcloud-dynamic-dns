@@ -49,6 +49,7 @@ resource "kubernetes_deployment" "dynamic-dns" {
           name= "persistent-volume"
           gce_persistent_disk {
             pd_name = var.persistent_disk
+            read_only = true
           }
         }
 
