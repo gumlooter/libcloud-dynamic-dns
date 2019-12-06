@@ -14,7 +14,7 @@ locals {
 }
 
 # schedule Jupyter Notebook
-resource "kubernetes_deployment" "jupyter" {
+resource "kubernetes_deployment" "dynamic-dns" {
   # create resource only if there it's required
   count = local.onoff_switch
 
