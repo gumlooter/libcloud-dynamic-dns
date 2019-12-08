@@ -122,7 +122,7 @@ resource "kubernetes_config_map" "service_account_json" {
   }
 
   data = {
-    var.service_account_json_name = var.service_account_json
+    "${var.service_account_json_name}" = var.service_account_json
   }
 }
 
