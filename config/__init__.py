@@ -20,3 +20,7 @@ class Config:
     A_RECORD_ZONE_NAME = os.getenv(
         "A_RECORD_ZONE_NAME", "mydomain.com."
     )  # The domain zone name (usually the domain with an ending `.`)
+    try:
+        DNS_UPD_FREQ = float(os.getenv("DNS_UPD_FREQ", 0))
+    except ValueError:
+        DNS_UPD_FREQ = 0.0

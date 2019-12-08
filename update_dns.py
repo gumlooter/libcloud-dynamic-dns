@@ -77,17 +77,26 @@ class GoogleDNSUpdater:
         return False
 
 
+def get_and_set_ip(gdns, url, config):
+    current_ip = requests.get(url).text
+    result = gdns.update_record_ip(
+        config.A_RECORD_ZONE_NAME,
+        config.A_RECORD_NAME,
+        current_ip,
+        config.A_RECORD_TTL_SECONDS,
+    )
+    print("SUCCESS" if result else "FAILURE")
+
+
 if __name__ == "__main__":
     WHATS_MY_IP_URL = "https://api.ipify.org"
     gdns = GoogleDNSUpdater()
     starttime = time.time()
-    while True:
-        current_ip = requests.get(WHATS_MY_IP_URL).text
-        result = gdns.update_record_ip(
-            Config.A_RECORD_ZONE_NAME,
-            Config.A_RECORD_NAME,
-            current_ip,
-            Config.A_RECORD_TTL_SECONDS,
+
+    while Config.DNS_UPD_FREQ:
+        get_and_set_ip(gdns, WHATS_MY_IP_URL, Config)
+        time.sleep(
+            Config.DNS_UPD_FREQ - ((time.time() - starttime) % Config.DNS_UPD_FREQ)
         )
-        print("SUCCESS" if result else "FAILURE")
-        time.sleep(3600.0 - ((time.time() - starttime) % 3600.0))  # repeat every hour
+    else:
+        get_and_set_ip(gdns, WHATS_MY_IP_URL, Config)
