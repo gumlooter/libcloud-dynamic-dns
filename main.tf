@@ -53,7 +53,7 @@ resource "kubernetes_deployment" "dynamic-dns" {
         volume {
           name= "persistent-volume"
           config_map_ref {
-            name = "service_account_json"
+            name = "service-account-json"
           }
         }
 
@@ -116,9 +116,9 @@ resource "kubernetes_deployment" "dynamic-dns" {
   }
 }
 
-resource "kubernetes_config_map" "service_account_json" {
+resource "kubernetes_config_map" "service-account-json" {
   metadata {
-    name = "service_account_json"
+    name = "service-account-json"
   }
 
   data = {
