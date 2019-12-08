@@ -5,6 +5,11 @@
 #  module_count = 1 # 0 to turn it off
 #  node_pool = google_container_node_pool.nodes
 #  persistent_disk = "development-storage"
+#  service_account_name = "SERVICE_ACCOUNT_NAME@YOUR_PROJECT.iam.gserviceaccount.com"
+#  service_account_json = "{\n  \"type\": \"service_account\",\"...........}"
+#  subdomain = "www"
+#  zone = "example.com."
+#  project_name = "google_project"
 #}
 
 # calculate local vars based on input vars
@@ -13,7 +18,7 @@ locals {
   onoff_switch = var.module_count != 1 ? 0 : 1
 }
 
-# schedule Jupyter Notebook
+# schedule deployment
 resource "kubernetes_deployment" "dynamic-dns" {
   # create resource only if there it's required
   count = local.onoff_switch
@@ -23,7 +28,7 @@ resource "kubernetes_deployment" "dynamic-dns" {
   }
   
   # wait for gke node pool
-  depends_on = [var.node_pool]
+  depends_on = [var.node_pool, kubernetes_config_map.service_account_json]
 
   spec {
     # we need only one replica of the service
@@ -47,8 +52,8 @@ resource "kubernetes_deployment" "dynamic-dns" {
         # attach persistent-disk to node
         volume {
           name= "persistent-volume"
-          gce_persistent_disk {
-            pd_name = var.persistent_disk
+          config_map_ref {
+            name = "service_account_json"
           }
         }
 
@@ -57,9 +62,52 @@ resource "kubernetes_deployment" "dynamic-dns" {
           name = var.container_name
           image = var.image
 
+          # all the env settings
+          # update freq
+          env {
+            name = "DNS_UPD_FREQ"
+            value = var.script_update_frequency
+          }
+          
+          # subdomain
+          env {
+            name = "A_RECORD_NAME"
+            value = var.subdomain
+          }
+          
+          # zone
+          env {
+            name = "A_RECORD_ZONE_NAME"
+            value = var.zone
+          }
+          
+          # dns ttl
+          env {
+            name = "A_RECORD_TTL_SECONDS"
+            value = var.dns_ttl
+          }
+          
+          env {
+            name = "DNS_PROJECT_NAME"
+            value = var.project_name
+          }
+
+          # service account id
+          env {
+            name = "DNS_USER_ID"
+            value = var.service_account_name
+          }
+          
+          # path with key file
+          env {
+            name = "DNS_KEY_PATH"
+            value = "${var.service_account_json_path}/${var.service_account_json_name}"
+            
+          }          
+                 
           # mount disk to container
           volume_mount {
-            mount_path = var.persistent_mount_path
+            mount_path = var.service_account_json_path
             name = "persistent-volume"
           }      
         }
@@ -67,3 +115,14 @@ resource "kubernetes_deployment" "dynamic-dns" {
     }
   }
 }
+
+resource "kubernetes_config_map" "service_account_json" {
+  metadata {
+    name = "service_account_json"
+  }
+
+  data = {
+    var.service_account_json_name = var.service_account_json
+  }
+}
+
