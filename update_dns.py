@@ -5,6 +5,7 @@ from libcloud.dns.types import RecordType
 import requests
 import time
 from config import Config
+import os
 
 
 class GoogleDNSUpdater:
@@ -14,7 +15,9 @@ class GoogleDNSUpdater:
         self.create_dns_driver()
 
     def create_dns_driver(self):
-        self.dns_driver = GoogleDNSDriver(Config.DNS_USER_ID, Config.DNS_KEY, Config.DNS_PROJECT_NAME)
+        self.dns_driver = GoogleDNSDriver(
+            Config.DNS_USER_ID, Config.DNS_KEY_PATH, Config.DNS_PROJECT_NAME
+        )
 
     def list_zones(self):
         return self.dns_driver.list_zones()
@@ -29,7 +32,9 @@ class GoogleDNSUpdater:
             if self.format_record_name(name, zone.domain) == record.name:
                 return record.id
 
-    def create_or_update_record(self, zone=None, record_name=None, a_record_value=None, ttl_seconds=3600):
+    def create_or_update_record(
+        self, zone=None, record_name=None, a_record_value=None, ttl_seconds=3600
+    ):
         if None in (zone, record_name, a_record_value):
             return False
 
@@ -42,37 +47,47 @@ class GoogleDNSUpdater:
             if record_id:
                 dns_record = self.dns_driver.get_record(zone.id, record_id)
         except LibcloudError as e:
-            print("Error locating record: {}".format(e.message))
+            print("Error locating record: {}".format(repr(e)))
 
         # Set record data
-        record_data = {
-            "ttl": ttl_seconds,
-            "rrdatas": [a_record_value]
-        }
+        record_data = {"ttl": ttl_seconds, "rrdatas": [a_record_value]}
 
         # Create or update an existing record with record_data
         if not dns_record:
-            return self.dns_driver.create_record(formatted_record_name, zone, RecordType.A, record_data)
+            return self.dns_driver.create_record(
+                formatted_record_name, zone, RecordType.A, record_data
+            )
         else:
             if self.dns_driver.delete_record(dns_record):
-                return self.dns_driver.create_record(formatted_record_name, zone, RecordType.A, record_data)
+                return self.dns_driver.create_record(
+                    formatted_record_name, zone, RecordType.A, record_data
+                )
             else:
                 return False
 
     def update_record_ip(self, zone_name, record_name, ip, ttl_seconds):
         for zone in self.list_zones():
             if zone.domain == zone_name:
-                print("Setting A record: {}.{} to point: {}".format(record_name, zone.domain, ip))
+                print(
+                    "Setting A record: {}.{} to point: {}".format(
+                        record_name, zone.domain, ip
+                    )
+                )
                 return gdns.create_or_update_record(zone, record_name, ip, ttl_seconds)
         return False
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     WHATS_MY_IP_URL = "https://api.ipify.org"
     gdns = GoogleDNSUpdater()
-    starttime=time.time()
+    starttime = time.time()
     while True:
         current_ip = requests.get(WHATS_MY_IP_URL).text
-        result = gdns.update_record_ip(Config.A_RECORD_ZONE_NAME, Config.A_RECORD_NAME,
-                                       current_ip, Config.A_RECORD_TTL_SECONDS)
+        result = gdns.update_record_ip(
+            Config.A_RECORD_ZONE_NAME,
+            Config.A_RECORD_NAME,
+            current_ip,
+            Config.A_RECORD_TTL_SECONDS,
+        )
         print("SUCCESS" if result else "FAILURE")
-        time.sleep(3600.0 - ((time.time() - starttime) % 3600.0)) #repeat every hour
+        time.sleep(3600.0 - ((time.time() - starttime) % 3600.0))  # repeat every hour
