@@ -28,7 +28,7 @@ resource "kubernetes_deployment" "dynamic-dns" {
   }
   
   # wait for gke node pool
-  depends_on = [var.node_pool, kubernetes_config_map.service_account_json]
+  depends_on = [var.node_pool, kubernetes_config_map.service-account-json]
 
   spec {
     # we need only one replica of the service
@@ -49,10 +49,10 @@ resource "kubernetes_deployment" "dynamic-dns" {
       }
 
       spec {
-        # attach persistent-disk to node
+        # attach json to node
         volume {
-          name= "persistent-volume"
-          config_map_ref {
+          name= "config"
+          config_map {
             name = "service-account-json"
           }
         }
@@ -108,7 +108,7 @@ resource "kubernetes_deployment" "dynamic-dns" {
           # mount disk to container
           volume_mount {
             mount_path = var.service_account_json_path
-            name = "persistent-volume"
+            name = "config"
           }      
         }
       }      
