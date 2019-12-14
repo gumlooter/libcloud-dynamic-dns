@@ -9,16 +9,8 @@ variable "zone" {}
 variable "project_name" {}
 
 #internal variables
-variable "app_name" {
+variable "name" {
   default="ddns"
-}
-
-variable "container_name" {
-  default="ddns-container"
-}
-
-variable "deployment_name" {
-  default="ddns-deployment"
 }
 
 variable "image" {

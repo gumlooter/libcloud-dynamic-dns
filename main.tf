@@ -1,16 +1,17 @@
 # HOW TO USE:
 # add following to your terraform config
-#module "libcloud-dynamic-dns" {
-#  source = "github.com/gumlooter/libcloud-dynamic-dns"
-#  module_count = 1 # 0 to turn it off
-#  node_pool = google_container_node_pool.nodes
-#  persistent_disk = "development-storage"
-#  service_account_name = "SERVICE_ACCOUNT_NAME@YOUR_PROJECT.iam.gserviceaccount.com"
-#  service_account_json = "{\n  \"type\": \"service_account\",\"...........}"
-#  subdomain = "www"
-#  zone = "example.com."
-#  project_name = "google_project"
-#}
+#
+# module "libcloud-dynamic-dns" {
+#   source = "github.com/gumlooter/libcloud-dynamic-dns"
+#   module_count = 1 # 0 to turn it off
+#   node_pool = google_container_node_pool.nodes
+#   persistent_disk = "development-storage"
+#   service_account_name = "SERVICE_ACCOUNT_NAME@YOUR_PROJECT.iam.gserviceaccount.com"
+#   service_account_json = "{\n  \"type\": \"service_account\",\"...........}"
+#   subdomain = "www"
+#   zone = "example.com."
+#   project_name = "google_project"
+# }
 
 # calculate local vars based on input vars
 locals {
@@ -19,12 +20,12 @@ locals {
 }
 
 # schedule deployment
-resource "kubernetes_deployment" "dynamic-dns" {
+resource "kubernetes_deployment" "main" {
   # create resource only if there it's required
   count = local.onoff_switch
 
   metadata {
-    name = var.deployment_name
+    name = var.name
   }
   
   # wait for gke node pool
@@ -36,7 +37,7 @@ resource "kubernetes_deployment" "dynamic-dns" {
 
     selector {
       match_labels = {
-        app = var.app_name
+        app = var.name
       }
     }
 
@@ -44,7 +45,7 @@ resource "kubernetes_deployment" "dynamic-dns" {
     template {
       metadata {
         labels = {
-          app = var.app_name
+          app = var.name
         }
       }
 
