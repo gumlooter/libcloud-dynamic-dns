@@ -60,7 +60,7 @@ resource "kubernetes_deployment" "main" {
 
         # specify container 
         container {
-          name = var.container_name
+          name = var.name
           image = var.image
 
           # all the env settings
